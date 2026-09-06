@@ -335,7 +335,7 @@
       <a href="#release">Releases</a>
       <a href="#join">Community</a>
     </div>
-    <a href="#join" class="btn">Connect Wallet</a>
+    <a href="#join" class="btn" id="connect-wallet-btn">Connect Wallet</a>
   </nav>
 </header>
 
@@ -493,6 +493,53 @@
     </div>
   </div>
 </footer>
+
+<script>
+  // Simple, read-only wallet connect (MetaMask / injected wallets).
+  // This only requests the user's public address — it never requests
+  // token approvals, signatures for transfers, or moves any funds.
+  (function () {
+    const btn = document.getElementById('connect-wallet-btn');
+    if (!btn) return;
+
+    function shorten(addr) {
+      return addr.slice(0, 6) + '…' + addr.slice(-4);
+    }
+
+    async function connectWallet(e) {
+      e.preventDefault();
+
+      if (typeof window.ethereum === 'undefined') {
+        alert('No wallet found. Install MetaMask (or another browser wallet) and try again.');
+        return;
+      }
+
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (accounts && accounts.length > 0) {
+          btn.textContent = shorten(accounts[0]);
+          btn.style.background = 'var(--mint-deep)';
+        }
+      } catch (err) {
+        console.error('Wallet connection rejected or failed:', err);
+      }
+    }
+
+    btn.addEventListener('click', connectWallet);
+
+    // Reflect account switches/disconnects live.
+    if (window.ethereum && window.ethereum.on) {
+      window.ethereum.on('accountsChanged', (accounts) => {
+        if (accounts.length === 0) {
+          btn.textContent = 'Connect Wallet';
+          btn.style.background = '';
+        } else {
+          btn.textContent = shorten(accounts[0]);
+        }
+      });
+    }
+  })();
+</script>
 
 </body>
 </html>
